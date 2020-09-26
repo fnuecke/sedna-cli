@@ -35,11 +35,12 @@ compileJava {
 
 repositories {
     mavenCentral()
-    maven { url "http://maven.cil.li/maven" } // Sedna
+    maven { url "http://maven.cil.li/" } // Sedna
 }
 
 dependencies {
-    implementation 'li.cil.sedna:sedna:0.0.1'
+    implementation 'li.cil.sedna:sedna:0.0.1+'
+
     implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
     implementation 'org.jline:jline:3.16.0'
