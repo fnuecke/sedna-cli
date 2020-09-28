@@ -40,6 +40,7 @@ repositories {
 
 dependencies {
     implementation 'li.cil.sedna:sedna:0.0.1+'
+    implementation 'li.cil.sedna:sedna-buildroot:0.0.1+'
 
     implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
