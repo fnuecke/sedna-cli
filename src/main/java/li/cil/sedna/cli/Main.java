@@ -199,8 +199,17 @@ public final class Main {
 
         for (int i = 0; i < samples; i++) {
             board.reset();
+
+            for (int offset = 0; offset < memory.getLength(); offset += 4) {
+                memory.store(offset, 0, Sizes.SIZE_32_LOG2);
+            }
             loadProgramFile(memory, Buildroot.getLinuxImage());
+
+            for (int offset = 0; offset < rom.getLength(); offset += 4) {
+                rom.store(offset, 0, Sizes.SIZE_32_LOG2);
+            }
             loadProgramFile(rom, Buildroot.getFirmware());
+
             sb.setLength(0);
 
             final long runStart = System.currentTimeMillis();
