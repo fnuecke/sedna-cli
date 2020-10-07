@@ -7,6 +7,8 @@ import li.cil.sedna.device.block.ByteBufferBlockDevice;
 import li.cil.sedna.device.memory.Memory;
 import li.cil.sedna.device.serial.UART16550A;
 import li.cil.sedna.device.virtio.VirtIOBlockDevice;
+import li.cil.sedna.device.virtio.VirtIOFileSystemDevice;
+import li.cil.sedna.fs.HostFileSystem;
 import li.cil.sedna.riscv.R5Board;
 import li.cil.sedna.riscv.R5CPU;
 import org.apache.logging.log4j.LogManager;
@@ -115,14 +117,18 @@ public final class Main {
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
+        final VirtIOFileSystemDevice fs = new VirtIOFileSystemDevice(board.getMemoryMap(),
+                "ohai", new HostFileSystem(new File("D:\\riscv-test")));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
+        fs.getInterrupt().set(0x2, board.getInterruptController());
 
         board.addDevice(0x80000000, rom);
         board.addDevice(0x80000000 + 0x400000, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
+        board.addDevice(fs);
 
         board.setBootargs("console=ttyS0 root=/dev/vda ro");
 
