@@ -118,7 +118,7 @@ public final class Main {
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
         final VirtIOFileSystemDevice fs = new VirtIOFileSystemDevice(board.getMemoryMap(),
-                "ohai", new HostFileSystem(new File("D:\\riscv-test")));
+                "host_fs", new HostFileSystem(new File(".").getAbsoluteFile()));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
