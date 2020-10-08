@@ -76,6 +76,7 @@ public final class Main {
 
         loadProgramFile(memory, Buildroot.getLinuxImage());
         loadProgramFile(rom, Buildroot.getFirmware());
+        board.installDeviceTree(0x80000000 + 0x02200000);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
@@ -136,6 +137,7 @@ public final class Main {
 
         loadProgramFile(memory, Buildroot.getLinuxImage());
         loadProgramFile(rom, Buildroot.getFirmware());
+        board.installDeviceTree(0x80000000 + 0x02200000);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
@@ -215,6 +217,8 @@ public final class Main {
                 rom.store(offset, 0, Sizes.SIZE_32_LOG2);
             }
             loadProgramFile(rom, Buildroot.getFirmware());
+
+            board.installDeviceTree(0x80000000 + 0x02200000);
 
             sb.setLength(0);
 
