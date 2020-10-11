@@ -178,16 +178,20 @@ public final class Main {
     private static void runBenchmark() throws Exception {
         final R5Board board = new R5Board();
         final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(128 * 1014 * 1024);
+        final PhysicalMemory memory = Memory.create(32 * 1014 * 1024);
         final UART16550A uart = new UART16550A();
+        final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
+                ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
+        hdd.getInterrupt().set(0x1, board.getInterruptController());
 
-        board.addDevice(0x10000000, uart);
         board.addDevice(0x80000000, rom);
         board.addDevice(0x80000000 + 0x400000, memory);
+        board.addDevice(uart);
+        board.addDevice(hdd);
 
-        board.setBootargs("console=ttyS0");
+        board.setBootargs("console=ttyS0 root=/dev/vda ro");
 
         LOGGER.info("Waiting for profiler...");
         Thread.sleep(5 * 1000);
@@ -206,18 +210,17 @@ public final class Main {
         final StringBuilder sb = new StringBuilder(16 * 1024);
 
         for (int i = 0; i < samples; i++) {
-            board.reset();
-
-            for (int offset = 0; offset < memory.getLength(); offset += 4) {
-                memory.store(offset, 0, Sizes.SIZE_32_LOG2);
-            }
-            loadProgramFile(memory, Buildroot.getLinuxImage());
-
             for (int offset = 0; offset < rom.getLength(); offset += 4) {
                 rom.store(offset, 0, Sizes.SIZE_32_LOG2);
             }
-            loadProgramFile(rom, Buildroot.getFirmware());
+            for (int offset = 0; offset < memory.getLength(); offset += 4) {
+                memory.store(offset, 0, Sizes.SIZE_32_LOG2);
+            }
 
+            board.reset();
+
+            loadProgramFile(rom, Buildroot.getFirmware());
+            loadProgramFile(memory, Buildroot.getLinuxImage());
             board.installDeviceTree(0x80000000 + 0x02200000);
 
             sb.setLength(0);
@@ -251,7 +254,13 @@ public final class Main {
 
         final int avgDuration = accRunDuration / samples;
         System.out.printf("\n\ntimes: min=%.2fs, max=%.2fs, avg=%.2fs\n",
-                minRunDuration / 1000.0, maxRunDuration / 1000.0, avgDuration / 1000.0);
+                minRunDuration / 1000.0,
+                maxRunDuration / 1000.0,
+                avgDuration / 1000.0);
+        System.out.printf("\n\nhz: min=%.2fsMHz, max=%.2fMHz, avg=%.2fMHz\n",
+                (cyclesPerRun / 1_000_000.0) / (minRunDuration / 1000.0),
+                (cyclesPerRun / 1_000_000.0) / (maxRunDuration / 1000.0),
+                (cyclesPerRun / 1_000_000.0) / (avgDuration / 1000.0));
     }
 
     private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream) throws Exception {
