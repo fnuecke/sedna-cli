@@ -257,7 +257,7 @@ public final class Main {
                 minRunDuration / 1000.0,
                 maxRunDuration / 1000.0,
                 avgDuration / 1000.0);
-        System.out.printf("\n\nhz: min=%.2fsMHz, max=%.2fMHz, avg=%.2fMHz\n",
+        System.out.printf("\n\nhz: max=%.2fsMHz, min=%.2fMHz, avg=%.2fMHz\n",
                 (cyclesPerRun / 1_000_000.0) / (minRunDuration / 1000.0),
                 (cyclesPerRun / 1_000_000.0) / (maxRunDuration / 1000.0),
                 (cyclesPerRun / 1_000_000.0) / (avgDuration / 1000.0));
