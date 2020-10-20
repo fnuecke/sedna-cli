@@ -11,8 +11,6 @@ import li.cil.sedna.device.virtio.VirtIOFileSystemDevice;
 import li.cil.sedna.fs.HostFileSystem;
 import li.cil.sedna.riscv.R5Board;
 import li.cil.sedna.riscv.R5CPU;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -22,8 +20,6 @@ import org.jline.utils.NonBlockingReader;
 import java.io.*;
 
 public final class Main {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static void main(final String[] args) throws Exception {
         for (final String arg : args) {
             if ("--benchmark".equals(arg)) {
@@ -51,7 +47,7 @@ public final class Main {
             try {
                 terminal.setSize(new Size(80, 25));
             } catch (final UnsupportedOperationException e) {
-                LOGGER.warn("Cannot resize window to 80x25. Things might look a bit derpy.");
+                System.err.println("Cannot resize window to 80x25. Things might look a bit derpy.");
             }
         }
 
@@ -193,9 +189,9 @@ public final class Main {
 
         board.setBootargs("console=ttyS0 root=/dev/vda ro");
 
-        LOGGER.info("Waiting for profiler...");
+        System.out.println("Waiting for profiler...");
         Thread.sleep(5 * 1000);
-        LOGGER.info("Starting!");
+        System.out.println("Initializing...");
 
         final long cyclesPerRun = 300_000_000;
         final int cyclesPerStep = 1_000;
@@ -208,6 +204,8 @@ public final class Main {
 
         final R5CPU cpu = board.getCpu();
         final StringBuilder sb = new StringBuilder(16 * 1024);
+
+        System.out.println("Starting...");
 
         for (int i = 0; i < samples; i++) {
             for (int offset = 0; offset < rom.getLength(); offset += 4) {
