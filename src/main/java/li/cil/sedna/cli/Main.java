@@ -60,7 +60,8 @@ public final class Main {
 
         loadProgramFile(rom, Buildroot.getFirmware());
         loadProgramFile(memory, Buildroot.getLinuxImage());
-        board.installDeviceTree();
+        board.initialize();
+        board.setRunning(true);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
@@ -69,8 +70,7 @@ public final class Main {
             final BufferedReader br = new BufferedReader(isr);
 
             int remaining = 0;
-            //noinspection InfiniteLoopStatement
-            for (; ; ) {
+            while (board.isRunning()) {
                 final long stepStart = System.currentTimeMillis();
 
                 remaining += cyclesPerSecond;
@@ -136,14 +136,14 @@ public final class Main {
 
         loadProgramFile(memory, Buildroot.getLinuxImage());
         loadProgramFile(rom, Buildroot.getFirmware());
-        board.installDeviceTree();
+        board.initialize();
+        board.setRunning(true);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
 
         int remaining = 0;
-        //noinspection InfiniteLoopStatement
-        for (; ; ) {
+        while (board.isRunning()) {
             final long stepStart = System.currentTimeMillis();
 
             remaining += cyclesPerSecond;
@@ -219,7 +219,8 @@ public final class Main {
 
             loadProgramFile(rom, Buildroot.getFirmware());
             loadProgramFile(memory, Buildroot.getLinuxImage());
-            board.installDeviceTree();
+            board.initialize();
+            board.setRunning(true);
 
             sb.setLength(0);
 
@@ -227,7 +228,7 @@ public final class Main {
 
             final long limit = cpu.getTime() + cyclesPerRun;
             int remaining = 0;
-            while (cpu.getTime() < limit) {
+            while (cpu.getTime() < limit && board.isRunning()) {
                 remaining += hz;
                 while (remaining > 0) {
                     board.step(cyclesPerStep);
