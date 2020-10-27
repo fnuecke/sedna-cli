@@ -34,83 +34,10 @@ public final class Main {
         runSimple();
     }
 
-    private static void runTerminal() throws Exception {
-        final Terminal terminal = TerminalBuilder.builder().jansi(false).jna(true).build();
-        if (terminal.getClass() == DumbTerminal.class) {
-            return;
-        }
-
-        final NonBlockingReader reader = terminal.reader();
-        final PrintWriter writer = terminal.writer();
-
-        if (!terminal.getSize().equals(new Size(80, 25))) {
-            try {
-                terminal.setSize(new Size(80, 25));
-            } catch (final UnsupportedOperationException e) {
-                System.err.println("Cannot resize window to 80x25. Things might look a bit derpy.");
-            }
-        }
-
-        final R5Board board = new R5Board();
-        final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1014 * 1024);
-        final UART16550A uart = new UART16550A();
-        final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
-                ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
-
-        uart.getInterrupt().set(0xA, board.getInterruptController());
-        hdd.getInterrupt().set(0x1, board.getInterruptController());
-
-        board.addDevice(0x80000000, rom);
-        board.addDevice(0x80000000 + 0x400000, memory);
-        board.addDevice(uart);
-        board.addDevice(hdd);
-
-        board.setBootargs("console=ttyS0 root=/dev/vda ro");
-
-        board.reset();
-
-        loadProgramFile(memory, Buildroot.getLinuxImage());
-        loadProgramFile(rom, Buildroot.getFirmware());
-        board.installDeviceTree(0x80000000 + 0x02200000);
-
-        final int cyclesPerSecond = board.getCpu().getFrequency();
-        final int cyclesPerStep = 1_000;
-
-        int remaining = 0;
-        //noinspection InfiniteLoopStatement
-        for (; ; ) {
-            final long stepStart = System.currentTimeMillis();
-
-            remaining += cyclesPerSecond;
-            while (remaining > 0) {
-                board.step(cyclesPerStep);
-                remaining -= cyclesPerStep;
-
-                int value;
-                while ((value = uart.read()) != -1) {
-                    writer.append((char) value);
-                }
-                writer.flush();
-
-                while (reader.available() > 0 && uart.canPutByte()) {
-                    uart.putByte((byte) reader.read());
-                }
-            }
-
-            final long stepDuration = System.currentTimeMillis() - stepStart;
-            final long sleep = 1000 - stepDuration;
-            if (sleep > 0) {
-                //noinspection BusyWait
-                Thread.sleep(sleep);
-            }
-        }
-    }
-
     private static void runSimple() throws Exception {
         final R5Board board = new R5Board();
         final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1014 * 1024);
+        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
@@ -131,9 +58,9 @@ public final class Main {
 
         board.reset();
 
-        loadProgramFile(memory, Buildroot.getLinuxImage());
         loadProgramFile(rom, Buildroot.getFirmware());
-        board.installDeviceTree(0x80000000 + 0x02200000);
+        loadProgramFile(memory, Buildroot.getLinuxImage());
+        board.installDeviceTree();
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
@@ -171,10 +98,83 @@ public final class Main {
         }
     }
 
+    private static void runTerminal() throws Exception {
+        final Terminal terminal = TerminalBuilder.builder().jansi(false).jna(true).build();
+        if (terminal.getClass() == DumbTerminal.class) {
+            return;
+        }
+
+        final NonBlockingReader reader = terminal.reader();
+        final PrintWriter writer = terminal.writer();
+
+        if (!terminal.getSize().equals(new Size(80, 25))) {
+            try {
+                terminal.setSize(new Size(80, 25));
+            } catch (final UnsupportedOperationException e) {
+                System.err.println("Cannot resize window to 80x25. Things might look a bit derpy.");
+            }
+        }
+
+        final R5Board board = new R5Board();
+        final PhysicalMemory rom = Memory.create(128 * 1024);
+        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
+        final UART16550A uart = new UART16550A();
+        final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
+                ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
+
+        uart.getInterrupt().set(0xA, board.getInterruptController());
+        hdd.getInterrupt().set(0x1, board.getInterruptController());
+
+        board.addDevice(0x80000000, rom);
+        board.addDevice(0x80000000 + 0x400000, memory);
+        board.addDevice(uart);
+        board.addDevice(hdd);
+
+        board.setBootargs("console=ttyS0 root=/dev/vda ro");
+
+        board.reset();
+
+        loadProgramFile(memory, Buildroot.getLinuxImage());
+        loadProgramFile(rom, Buildroot.getFirmware());
+        board.installDeviceTree();
+
+        final int cyclesPerSecond = board.getCpu().getFrequency();
+        final int cyclesPerStep = 1_000;
+
+        int remaining = 0;
+        //noinspection InfiniteLoopStatement
+        for (; ; ) {
+            final long stepStart = System.currentTimeMillis();
+
+            remaining += cyclesPerSecond;
+            while (remaining > 0) {
+                board.step(cyclesPerStep);
+                remaining -= cyclesPerStep;
+
+                int value;
+                while ((value = uart.read()) != -1) {
+                    writer.append((char) value);
+                }
+                writer.flush();
+
+                while (reader.available() > 0 && uart.canPutByte()) {
+                    uart.putByte((byte) reader.read());
+                }
+            }
+
+            final long stepDuration = System.currentTimeMillis() - stepStart;
+            final long sleep = 1000 - stepDuration;
+            if (sleep > 0) {
+                //noinspection BusyWait
+                Thread.sleep(sleep);
+            }
+        }
+    }
+
     private static void runBenchmark() throws Exception {
         final R5Board board = new R5Board();
         final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1014 * 1024);
+        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
@@ -219,7 +219,7 @@ public final class Main {
 
             loadProgramFile(rom, Buildroot.getFirmware());
             loadProgramFile(memory, Buildroot.getLinuxImage());
-            board.installDeviceTree(0x80000000 + 0x02200000);
+            board.installDeviceTree();
 
             sb.setLength(0);
 
@@ -262,8 +262,12 @@ public final class Main {
     }
 
     private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream) throws Exception {
+        loadProgramFile(memory, stream, 0);
+    }
+
+    private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream, int offset) throws Exception {
         final BufferedInputStream bis = new BufferedInputStream(stream);
-        for (int address = 0, value = bis.read(); value != -1; value = bis.read(), address++) {
+        for (int address = offset, value = bis.read(); value != -1; value = bis.read(), address++) {
             memory.store(address, (byte) value, Sizes.SIZE_8_LOG2);
         }
     }
