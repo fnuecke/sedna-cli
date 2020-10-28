@@ -54,7 +54,8 @@ public final class Main {
         board.addDevice(hdd);
         board.addDevice(fs);
 
-        board.setBootargs("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
+        board.setStandardOutputDevice(uart);
 
         board.reset();
 
@@ -130,7 +131,7 @@ public final class Main {
         board.addDevice(uart);
         board.addDevice(hdd);
 
-        board.setBootargs("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
 
         board.reset();
 
@@ -187,7 +188,7 @@ public final class Main {
         board.addDevice(uart);
         board.addDevice(hdd);
 
-        board.setBootargs("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
 
         System.out.println("Waiting for profiler...");
         Thread.sleep(5 * 1000);
