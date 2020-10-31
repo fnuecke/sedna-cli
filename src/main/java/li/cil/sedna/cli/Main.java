@@ -36,8 +36,7 @@ public final class Main {
 
     private static void runSimple() throws Exception {
         final R5Board board = new R5Board();
-        final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
@@ -48,19 +47,19 @@ public final class Main {
         hdd.getInterrupt().set(0x1, board.getInterruptController());
         fs.getInterrupt().set(0x2, board.getInterruptController());
 
-        board.addDevice(0x80000000, rom);
-        board.addDevice(0x80000000 + 0x400000, memory);
+        board.addDevice(0x80000000, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
         board.addDevice(fs);
 
-        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("root=/dev/vda ro");
         board.setStandardOutputDevice(uart);
 
         board.reset();
 
-        loadProgramFile(rom, Buildroot.getFirmware());
-        loadProgramFile(memory, Buildroot.getLinuxImage());
+        loadProgramFile(memory, Buildroot.getFirmware());
+        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
+
         board.initialize();
         board.setRunning(true);
 
@@ -117,8 +116,7 @@ public final class Main {
         }
 
         final R5Board board = new R5Board();
-        final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
@@ -126,17 +124,18 @@ public final class Main {
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
-        board.addDevice(0x80000000, rom);
-        board.addDevice(0x80000000 + 0x400000, memory);
+        board.addDevice(0x80000000, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
 
-        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("root=/dev/vda ro");
+        board.setStandardOutputDevice(uart);
 
         board.reset();
 
-        loadProgramFile(memory, Buildroot.getLinuxImage());
-        loadProgramFile(rom, Buildroot.getFirmware());
+        loadProgramFile(memory, Buildroot.getFirmware());
+        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
+
         board.initialize();
         board.setRunning(true);
 
@@ -174,8 +173,7 @@ public final class Main {
 
     private static void runBenchmark() throws Exception {
         final R5Board board = new R5Board();
-        final PhysicalMemory rom = Memory.create(128 * 1024);
-        final PhysicalMemory memory = Memory.create(32 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
@@ -183,12 +181,12 @@ public final class Main {
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
-        board.addDevice(0x80000000, rom);
-        board.addDevice(0x80000000 + 0x400000, memory);
+        board.addDevice(0x80000000, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
 
-        board.setBootArguments("console=ttyS0 root=/dev/vda ro");
+        board.setBootArguments("root=/dev/vda ro");
+        board.setStandardOutputDevice(uart);
 
         System.out.println("Waiting for profiler...");
         Thread.sleep(5 * 1000);
@@ -209,17 +207,15 @@ public final class Main {
         System.out.println("Starting...");
 
         for (int i = 0; i < samples; i++) {
-            for (int offset = 0; offset < rom.getLength(); offset += 4) {
-                rom.store(offset, 0, Sizes.SIZE_32_LOG2);
-            }
+            board.reset();
+
             for (int offset = 0; offset < memory.getLength(); offset += 4) {
                 memory.store(offset, 0, Sizes.SIZE_32_LOG2);
             }
 
-            board.reset();
+            loadProgramFile(memory, Buildroot.getFirmware());
+            loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
 
-            loadProgramFile(rom, Buildroot.getFirmware());
-            loadProgramFile(memory, Buildroot.getLinuxImage());
             board.initialize();
             board.setRunning(true);
 
