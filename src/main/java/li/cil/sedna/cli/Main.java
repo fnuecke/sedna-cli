@@ -47,7 +47,7 @@ public final class Main {
         hdd.getInterrupt().set(0x1, board.getInterruptController());
         fs.getInterrupt().set(0x2, board.getInterruptController());
 
-        board.addDevice(0x80000000, memory);
+        board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
         board.addDevice(fs);
@@ -58,7 +58,7 @@ public final class Main {
         board.reset();
 
         loadProgramFile(memory, Buildroot.getFirmware());
-        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
+        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
 
         board.initialize();
         board.setRunning(true);
@@ -124,7 +124,7 @@ public final class Main {
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
-        board.addDevice(0x80000000, memory);
+        board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
 
@@ -134,7 +134,7 @@ public final class Main {
         board.reset();
 
         loadProgramFile(memory, Buildroot.getFirmware());
-        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
+        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
 
         board.initialize();
         board.setRunning(true);
@@ -181,7 +181,7 @@ public final class Main {
         uart.getInterrupt().set(0xA, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
-        board.addDevice(0x80000000, memory);
+        board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
         board.addDevice(hdd);
 
@@ -214,7 +214,7 @@ public final class Main {
             }
 
             loadProgramFile(memory, Buildroot.getFirmware());
-            loadProgramFile(memory, Buildroot.getLinuxImage(), 0x400000);
+            loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
 
             board.initialize();
             board.setRunning(true);
