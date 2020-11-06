@@ -5,6 +5,8 @@ import li.cil.sedna.api.device.PhysicalMemory;
 import li.cil.sedna.buildroot.Buildroot;
 import li.cil.sedna.device.block.ByteBufferBlockDevice;
 import li.cil.sedna.device.memory.Memory;
+import li.cil.sedna.device.rtc.GoldfishRTC;
+import li.cil.sedna.device.rtc.SystemTimeRealTimeCounter;
 import li.cil.sedna.device.serial.UART16550A;
 import li.cil.sedna.device.virtio.VirtIOBlockDevice;
 import li.cil.sedna.device.virtio.VirtIOFileSystemDevice;
@@ -36,19 +38,22 @@ public final class Main {
 
     private static void runSimple() throws Exception {
         final R5Board board = new R5Board();
-        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
+        final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
         final VirtIOFileSystemDevice fs = new VirtIOFileSystemDevice(board.getMemoryMap(),
                 "host_fs", new HostFileSystem(new File(".").getAbsoluteFile()));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
+        rtc.getInterrupt().set(0xB, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
         fs.getInterrupt().set(0x2, board.getInterruptController());
 
         board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
+        board.addDevice(rtc);
         board.addDevice(hdd);
         board.addDevice(fs);
 
@@ -116,16 +121,19 @@ public final class Main {
         }
 
         final R5Board board = new R5Board();
-        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
+        final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
+        rtc.getInterrupt().set(0xB, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
         board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
+        board.addDevice(rtc);
         board.addDevice(hdd);
 
         board.setBootArguments("root=/dev/vda ro");
@@ -173,16 +181,19 @@ public final class Main {
 
     private static void runBenchmark() throws Exception {
         final R5Board board = new R5Board();
-        final PhysicalMemory memory = Memory.create(40 * 1024 * 1024);
+        final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
+        final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
+        rtc.getInterrupt().set(0xB, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
 
         board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
+        board.addDevice(rtc);
         board.addDevice(hdd);
 
         board.setBootArguments("root=/dev/vda ro");
