@@ -44,7 +44,7 @@ public final class Main {
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
                 ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
         final VirtIOFileSystemDevice fs = new VirtIOFileSystemDevice(board.getMemoryMap(),
-                "host_fs", new HostFileSystem(new File(".").getAbsoluteFile()));
+                "host_fs", new HostFileSystem());
 
         uart.getInterrupt().set(0xA, board.getInterruptController());
         rtc.getInterrupt().set(0xB, board.getInterruptController());
