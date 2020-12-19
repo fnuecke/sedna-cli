@@ -1,9 +1,11 @@
 package li.cil.sedna.cli;
 
 import li.cil.sedna.api.Sizes;
+import li.cil.sedna.api.device.BlockDevice;
 import li.cil.sedna.api.device.PhysicalMemory;
 import li.cil.sedna.buildroot.Buildroot;
 import li.cil.sedna.device.block.ByteBufferBlockDevice;
+import li.cil.sedna.device.block.SparseBlockDevice;
 import li.cil.sedna.device.memory.Memory;
 import li.cil.sedna.device.rtc.GoldfishRTC;
 import li.cil.sedna.device.rtc.SystemTimeRealTimeCounter;
@@ -41,8 +43,10 @@ public final class Main {
         final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
         final UART16550A uart = new UART16550A();
         final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
-        final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
-                ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true));
+
+        final BlockDevice rootfs = ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true);
+        final BlockDevice sparsefs = new SparseBlockDevice(rootfs);
+        final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(), sparsefs);
         final VirtIOFileSystemDevice fs = new VirtIOFileSystemDevice(board.getMemoryMap(),
                 "host_fs", new HostFileSystem());
 
@@ -57,7 +61,7 @@ public final class Main {
         board.addDevice(hdd);
         board.addDevice(fs);
 
-        board.setBootArguments("root=/dev/vda ro");
+        board.setBootArguments("root=/dev/vda rw");
         board.setStandardOutputDevice(uart);
 
         board.reset();
