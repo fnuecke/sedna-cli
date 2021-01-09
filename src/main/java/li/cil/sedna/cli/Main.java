@@ -1,5 +1,6 @@
 package li.cil.sedna.cli;
 
+import li.cil.sedna.Sedna;
 import li.cil.sedna.api.Sizes;
 import li.cil.sedna.api.device.BlockDevice;
 import li.cil.sedna.api.device.PhysicalMemory;
@@ -25,6 +26,8 @@ import java.io.*;
 
 public final class Main {
     public static void main(final String[] args) throws Exception {
+        Sedna.initialize();
+
         for (final String arg : args) {
             if ("--benchmark".equals(arg)) {
                 runBenchmark();
