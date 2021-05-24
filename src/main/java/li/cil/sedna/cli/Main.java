@@ -42,11 +42,20 @@ public final class Main {
     }
 
     private static void runSimple() throws Exception {
-        final R5Board board = new R5Board();
         final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
+        final R5Board board = new R5Board(b -> {
+            try {
+                loadProgramFile(memory, Buildroot.getFirmware());
+                loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
+
+                b.initialize();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        });
+
         final UART16550A uart = new UART16550A();
         final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
-
         final BlockDevice rootfs = ByteBufferBlockDevice.createFromStream(Buildroot.getRootFilesystem(), true);
         final BlockDevice sparsefs = new SparseBlockDevice(rootfs);
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(), sparsefs);
@@ -68,11 +77,6 @@ public final class Main {
         board.setStandardOutputDevice(uart);
 
         board.reset();
-
-        loadProgramFile(memory, Buildroot.getFirmware());
-        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
-
-        board.initialize();
         board.setRunning(true);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
@@ -127,8 +131,18 @@ public final class Main {
             }
         }
 
-        final R5Board board = new R5Board();
         final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
+        final R5Board board = new R5Board(b -> {
+            try {
+                loadProgramFile(memory, Buildroot.getFirmware());
+                loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
+
+                b.initialize();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        });
+
         final UART16550A uart = new UART16550A();
         final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
@@ -147,11 +161,6 @@ public final class Main {
         board.setStandardOutputDevice(uart);
 
         board.reset();
-
-        loadProgramFile(memory, Buildroot.getFirmware());
-        loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
-
-        board.initialize();
         board.setRunning(true);
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
@@ -187,8 +196,22 @@ public final class Main {
     }
 
     private static void runBenchmark() throws Exception {
-        final R5Board board = new R5Board();
         final PhysicalMemory memory = Memory.create(20 * 1024 * 1024);
+        final R5Board board = new R5Board(b -> {
+            try {
+                for (int offset = 0; offset < memory.getLength(); offset += Long.BYTES) {
+                    memory.store(offset, 0, Sizes.SIZE_64_LOG2);
+                }
+
+                loadProgramFile(memory, Buildroot.getFirmware());
+                loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
+
+                b.initialize();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        });
+
         final UART16550A uart = new UART16550A();
         final GoldfishRTC rtc = new GoldfishRTC(SystemTimeRealTimeCounter.get());
         final VirtIOBlockDevice hdd = new VirtIOBlockDevice(board.getMemoryMap(),
@@ -226,15 +249,6 @@ public final class Main {
 
         for (int i = 0; i < samples; i++) {
             board.reset();
-
-            for (int offset = 0; offset < memory.getLength(); offset += 4) {
-                memory.store(offset, 0, Sizes.SIZE_32_LOG2);
-            }
-
-            loadProgramFile(memory, Buildroot.getFirmware());
-            loadProgramFile(memory, Buildroot.getLinuxImage(), 0x200000);
-
-            board.initialize();
             board.setRunning(true);
 
             sb.setLength(0);
@@ -261,7 +275,7 @@ public final class Main {
             minRunDuration = Integer.min(minRunDuration, runDuration);
             maxRunDuration = Integer.max(maxRunDuration, runDuration);
 
-            System.out.print(sb.toString());
+            System.out.print(sb);
 
             System.out.printf("\n\ntime: %.2fs\n", runDuration / 1000.0);
         }
@@ -277,11 +291,11 @@ public final class Main {
                 (cyclesPerRun / 1_000_000.0) / (avgDuration / 1000.0));
     }
 
-    private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream) throws Exception {
+    private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream) throws IOException {
         loadProgramFile(memory, stream, 0);
     }
 
-    private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream, int offset) throws Exception {
+    private static void loadProgramFile(final PhysicalMemory memory, final InputStream stream, final int offset) throws IOException {
         final BufferedInputStream bis = new BufferedInputStream(stream);
         for (int address = offset, value = bis.read(); value != -1; value = bis.read(), address++) {
             memory.store(address, (byte) value, Sizes.SIZE_8_LOG2);
