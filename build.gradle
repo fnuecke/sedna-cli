@@ -28,28 +28,36 @@ if (build_number == null)
 version = "${semver}+${build_number}"
 group = 'li.cil.sedna'
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
-compileJava {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+java.toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+    vendor = JvmVendorSpec.ADOPTOPENJDK
 }
 
 repositories {
     mavenCentral()
-    maven { url 'https://maven.cil.li/' } // Sedna
+    ["fnuecke/sedna", "fnuecke/buildroot", "fnuecke/ceres"].forEach(repo -> {
+        maven {
+            url = uri("https://maven.pkg.github.com/${repo}")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GPR_USER")
+                password = project.findProperty("gpr.key") ?: System.getenv("GPR_KEY")
+            }
+        }
+    })
 }
 
 dependencies {
-    implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
-    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
-    implementation 'org.jline:jline:3.16.0'
-    implementation 'org.jline:jline-terminal-jna:3.16.0'
-    implementation 'net.java.dev.jna:jna:5.6.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.17.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.17.0'
+    implementation 'org.jline:jline:3.20.0'
+    implementation 'org.jline:jline-terminal-jna:3.20.0'
+    implementation 'net.java.dev.jna:jna:5.9.0'
 
-    implementation 'li.cil.sedna:sedna:1.1.0+'
-    implementation 'li.cil.sedna:sedna-buildroot:0.0.1+'
+    implementation 'li.cil.sedna:sedna:2.0.6'
+    implementation 'li.cil.sedna:sedna-buildroot:0.0.8'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 }
 
 publishing {
