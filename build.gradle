@@ -28,7 +28,7 @@ version = "${semver}+${build_number}"
 group = 'li.cil.sedna'
 
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
+    languageVersion = JavaLanguageVersion.of(21)
 }
 
 repositories {
