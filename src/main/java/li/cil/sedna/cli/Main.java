@@ -14,7 +14,6 @@ import li.cil.sedna.device.virtio.VirtIOBlockDevice;
 import li.cil.sedna.device.virtio.VirtIOFileSystemDevice;
 import li.cil.sedna.fs.HostFileSystem;
 import li.cil.sedna.riscv.R5Board;
-import li.cil.sedna.riscv.R5CPU;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -226,5 +225,6 @@ public final class Main {
                 Buildroot.getRootFilesystem());
     }
 
-    private record Images(InputStream firmware, InputStream kernel, InputStream rootfs) { }
+    private record Images(InputStream firmware, InputStream kernel, InputStream rootfs) {
+    }
 }
