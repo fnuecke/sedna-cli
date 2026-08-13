@@ -1,17 +1,25 @@
-def substituteLocal(final directoryName, final libraryName) {
-    final def path = new File("../${directoryName}");
-    if (path.exists()) {
-        println("Found local [${directoryName}] project, substituting...")
-        includeBuild(path) {
-            dependencySubstitution {
-                substitute module(libraryName) using project(':')
-            }
+def substituteLocal(final propertyName, final libraryName) {
+    final def configured = providers.gradleProperty(propertyName).orNull
+    if (configured == null || configured.isBlank()) {
+        return
+    }
+    def path = new File(configured)
+    if (!path.isAbsolute()) {
+        path = new File(rootDir, configured)
+    }
+    if (!path.isDirectory()) {
+        throw new IllegalStateException("[${propertyName}] is set to [${configured}], which is not a directory.")
+    }
+    println("Substituting [${libraryName}] from local [${path.canonicalPath}]")
+    includeBuild(path) {
+        dependencySubstitution {
+            substitute module(libraryName) using project(':')
         }
     }
 }
 
-substituteLocal('ceres', 'li.cil.ceres:ceres')
-substituteLocal('sedna', 'li.cil.sedna:sedna')
-substituteLocal('buildroot', 'li.cil.sedna:sedna-buildroot')
+substituteLocal('ceresDir', 'li.cil.ceres:ceres')
+substituteLocal('sednaDir', 'li.cil.sedna:sedna')
+substituteLocal('buildrootDir', 'li.cil.sedna:sedna-buildroot')
 
 rootProject.name = 'sedna-cli'
