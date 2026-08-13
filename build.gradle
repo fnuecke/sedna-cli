@@ -61,9 +61,9 @@ dependencies {
     implementation 'org.jline:jline-terminal-jna:3.20.0'
     implementation 'net.java.dev.jna:jna:5.9.0'
 
-    implementation tryProject(':modules:ceres', 'li.cil.ceres:ceres:0.0.4')
-    implementation tryProject(':modules:sedna', 'li.cil.sedna:sedna:2.0.7')
-    implementation tryProject(':modules:sedna-buildroot', 'li.cil.sedna:sedna-buildroot:0.0.8')
+    implementation tryProject(':modules:ceres', 'li.cil.ceres:ceres:0.0.6')
+    implementation tryProject(':modules:sedna', 'li.cil.sedna:sedna:2.1.0')
+    implementation tryProject(':modules:sedna-buildroot', 'li.cil.sedna:sedna-buildroot:0.0.9')
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
