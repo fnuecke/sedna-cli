@@ -21,5 +21,6 @@ def substituteLocal(final propertyName, final libraryName) {
 substituteLocal('ceresDir', 'li.cil.ceres:ceres')
 substituteLocal('sednaDir', 'li.cil.sedna:sedna')
 substituteLocal('buildrootDir', 'li.cil.sedna:sedna-buildroot')
+substituteLocal('sednaCpmDir', 'li.cil.sedna:sedna-cpm')
 
 rootProject.name = 'sedna-cli'
