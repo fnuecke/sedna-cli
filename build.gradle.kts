@@ -51,9 +51,9 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.9.0")
 
     implementation("li.cil.ceres:ceres:0.0.6")
-    implementation("li.cil.sedna:sedna:2.1.0")
+    implementation("li.cil.sedna:sedna:3.1.0")
     implementation("li.cil.sedna:sedna-buildroot:0.0.9")
-    implementation("li.cil.sedna:sedna-cpm:0.0.0")
+    implementation("li.cil.sedna:sedna-cpm:0.0.1")
 }
 
 publishing {
