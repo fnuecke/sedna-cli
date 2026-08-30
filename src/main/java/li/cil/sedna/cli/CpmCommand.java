@@ -41,11 +41,6 @@ public final class CpmCommand implements Callable<Integer> {
     private static final int CPM_FDC_PORT = 0x10;
     private static final int CPM_LATCH_PORT = 0x30;
 
-    private static final int CPM_FLOPPY_SIDES = 1;
-    private static final int CPM_FLOPPY_TRACKS = 64;
-    private static final int CPM_FLOPPY_SECTORS = 32;
-    private static final int CPM_FLOPPY_SECTOR_SIZE = 128;
-
     private Z80Board createCpmBoard(final UART16550A uart, final WD1793 fdc) throws IOException {
         final Z80Board board = new Z80Board();
 
@@ -105,17 +100,15 @@ public final class CpmCommand implements Callable<Integer> {
         }
     }
 
-    private void setDisk(final WD1793 fdc, final int unit, final BlockDevice disk) {
-        fdc.setDisk(unit, disk, CPM_FLOPPY_SIDES, CPM_FLOPPY_TRACKS, CPM_FLOPPY_SECTORS,
-            CPM_FLOPPY_SECTOR_SIZE);
+    private void setDisk(final WD1793 fdc, final int unit, final BlockDevice disk) throws IOException {
+        fdc.setDisk(unit, disk, Cpm.DiskGeometry.SIDES, Cpm.DiskGeometry.TRACKS, Cpm.DiskGeometry.SECTORS_PER_TRACK, Cpm.DiskGeometry.SECTOR_SIZE);
     }
 
     /**
      * A freshly formatted CP/M disk is filled with E5, which is what marks a directory entry unused.
      */
     private BlockDevice blankFloppy() throws IOException {
-        final int size = CPM_FLOPPY_SIDES * CPM_FLOPPY_TRACKS * CPM_FLOPPY_SECTORS * CPM_FLOPPY_SECTOR_SIZE;
-        final ByteBuffer blank = ByteBuffer.allocate(size);
+        final ByteBuffer blank = ByteBuffer.allocate(Cpm.DiskGeometry.getImageSize());
         while (blank.hasRemaining()) {
             blank.put((byte) 0xE5);
         }
