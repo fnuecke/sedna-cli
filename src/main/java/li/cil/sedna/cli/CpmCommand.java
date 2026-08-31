@@ -22,11 +22,20 @@ import java.util.concurrent.Callable;
 
 @Command(name = "cpm", mixinStandardHelpOptions = true, description = "Boots CP/M 2.2 on the Z80 board.")
 public final class CpmCommand implements Callable<Integer> {
+    @Option(names = "-s", description = "Enable the GDB stub on port 55554.")
+    private boolean enableGdbStub;
+
+    @Option(names = "-S", description = "Enable the GDB stub and wait for a debugger to attach.")
+    private boolean waitForGdb;
+
     @Option(names = "--write-protect", description = "Present the CP/M disk as write protected.")
     private boolean writeProtected;
 
     @Override
     public Integer call() throws Exception {
+        if (waitForGdb) {
+            enableGdbStub = true;
+        }
         runCpm();
         return 0;
     }
@@ -73,6 +82,10 @@ public final class CpmCommand implements Callable<Integer> {
         final Z80Board board = createCpmBoard(uart, fdc);
 
         board.setRunning(true);
+
+        if (enableGdbStub) {
+            board.enableGDB(55554, waitForGdb);
+        }
 
         final int cyclesPerSecond = board.getCpu().getFrequency();
         final int cyclesPerStep = 1_000;
