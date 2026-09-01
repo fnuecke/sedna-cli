@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 @Command(name = "cpm", mixinStandardHelpOptions = true, description = "Boots CP/M 2.2 on the Z80 board.")
@@ -30,6 +32,12 @@ public final class CpmCommand implements Callable<Integer> {
 
     @Option(names = "--write-protect", description = "Present the CP/M disk as write protected.")
     private boolean writeProtected;
+
+    @Option(names = "--disk", description = "Image file to put in the second drive as B:, instead of a blank " +
+        "floppy. Changes are written back when the machine stops.")
+    private Path diskPath;
+
+    private ByteBuffer diskImage; // to write back at exit
 
     @Override
     public Integer call() throws Exception {
@@ -68,7 +76,7 @@ public final class CpmCommand implements Callable<Integer> {
         // drive that keeps its letter with nothing in it.
         fdc.setUnitCount(3);
         setDisk(fdc, 0, ByteBufferBlockDevice.createFromStream(Cpm.getFloppyImage(), writeProtected));
-        setDisk(fdc, 1, blankFloppy());
+        setDisk(fdc, 1, diskPath != null ? loadDisk() : blankFloppy());
 
         board.setBootRom(new FlashMemoryDevice(readBootRom()));
 
@@ -100,7 +108,10 @@ public final class CpmCommand implements Callable<Integer> {
                     board.step(cyclesPerStep);
                     remaining -= cyclesPerStep;
 
-                    console.pump(uart);
+                    if (!console.pump(uart)) {
+                        board.setRunning(false); // stdin ran out, so stop and let the disk be saved
+                        break;
+                    }
                 }
 
                 final long stepDuration = System.currentTimeMillis() - stepStart;
@@ -110,17 +121,33 @@ public final class CpmCommand implements Callable<Integer> {
                     Thread.sleep(sleep);
                 }
             }
+        } finally {
+            saveDisk();
         }
+    }
+
+    private BlockDevice loadDisk() throws IOException {
+        final byte[] data = Files.readAllBytes(diskPath);
+        if (data.length != Cpm.DiskGeometry.getImageSize()) {
+            throw new IOException("[" + diskPath + "] is " + data.length + " bytes, but the geometry wants "
+                + Cpm.DiskGeometry.getImageSize() + ".");
+        }
+        diskImage = ByteBuffer.wrap(data);
+        return ByteBufferBlockDevice.wrap(diskImage, false);
+    }
+
+    private void saveDisk() throws IOException {
+        if (diskImage == null) {
+            return;
+        }
+        Files.write(diskPath, diskImage.array());
     }
 
     private void setDisk(final WD1793 fdc, final int unit, final BlockDevice disk) throws IOException {
         fdc.setDisk(unit, disk, Cpm.DiskGeometry.SIDES, Cpm.DiskGeometry.TRACKS, Cpm.DiskGeometry.SECTORS_PER_TRACK, Cpm.DiskGeometry.SECTOR_SIZE);
     }
 
-    /**
-     * A freshly formatted CP/M disk is filled with E5, which is what marks a directory entry unused.
-     */
-    private BlockDevice blankFloppy() throws IOException {
+    private BlockDevice blankFloppy() {
         final ByteBuffer blank = ByteBuffer.allocate(Cpm.DiskGeometry.getImageSize());
         while (blank.hasRemaining()) {
             blank.put((byte) 0xE5);
