@@ -1,8 +1,8 @@
 [versions]
 ceres = "0.0.7"
-sedna = "3.1.0"
-sedna-buildroot = "0.0.9"
-sedna-cpm = "0.0.1"
+sedna = "4.0.0"
+sedna-buildroot = "0.2.0"
+sedna-cpm = "0.1.0"
 
 jline = "3.20.0"
 jna = "5.9.0"
