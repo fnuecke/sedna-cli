@@ -3,6 +3,7 @@ package li.cil.sedna.cli;
 import li.cil.sedna.api.Sizes;
 import li.cil.sedna.api.device.BlockDevice;
 import li.cil.sedna.api.device.PhysicalMemory;
+import li.cil.sedna.api.memory.MemoryAccessException;
 import li.cil.sedna.buildroot.Buildroot;
 import li.cil.sedna.device.block.ByteBufferBlockDevice;
 import li.cil.sedna.device.memory.Memory;
@@ -21,7 +22,6 @@ import org.jline.utils.NonBlockingReader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -77,10 +77,11 @@ public final class RiscVCommand implements Callable<Integer> {
         board.setBootArguments("root=/dev/vda rw");
         board.setStandardOutputDevice(uart);
 
+        board.setFirmwareSize(Buildroot.getSednaFirmwareRegionSize());
+
         board.reset();
 
-        loadProgramFile(memory, images.firmware());
-        loadProgramFile(memory, images.kernel(), 0x200000);
+        loadProgram(memory, images.firmware());
 
         board.initialize();
         board.setRunning(true);
@@ -106,8 +107,7 @@ public final class RiscVCommand implements Callable<Integer> {
                 }
 
                 if (board.isRestarting()) {
-                    loadProgramFile(memory, images.firmware());
-                    loadProgramFile(memory, images.kernel(), 0x200000);
+                    loadProgram(memory, images.firmware());
 
                     board.initialize();
                 }
@@ -161,10 +161,11 @@ public final class RiscVCommand implements Callable<Integer> {
             board.setBootArguments("root=/dev/vda ro");
             board.setStandardOutputDevice(uart);
 
+            board.setFirmwareSize(Buildroot.getSednaFirmwareRegionSize());
+
             board.reset();
 
-            loadProgramFile(memory, images.firmware());
-            loadProgramFile(memory, images.kernel(), 0x200000);
+            loadProgram(memory, images.firmware());
 
             board.initialize();
             board.setRunning(true);
@@ -193,8 +194,7 @@ public final class RiscVCommand implements Callable<Integer> {
                 }
 
                 if (board.isRestarting()) {
-                    loadProgramFile(memory, images.firmware());
-                    loadProgramFile(memory, images.kernel(), 0x200000);
+                    loadProgram(memory, images.firmware());
 
                     board.initialize();
                 }
@@ -209,25 +209,19 @@ public final class RiscVCommand implements Callable<Integer> {
         }
     }
 
-    // Free choices: the CBIOS finds these through the enumeration window. Only CPM_BUS_PORT has to
-    private void loadProgramFile(final PhysicalMemory memory, final InputStream stream) throws Exception {
-        loadProgramFile(memory, stream, 0);
-    }
-
-    private void loadProgramFile(final PhysicalMemory memory, final InputStream stream, final int offset) throws IOException {
-        final BufferedInputStream bis = new BufferedInputStream(stream);
-        for (int address = offset, value = bis.read(); value != -1; value = bis.read(), address++) {
-            memory.store(address, (byte) value, Sizes.SIZE_8_LOG2);
+    private void loadProgram(final PhysicalMemory memory, final byte[] program) throws MemoryAccessException {
+        for (int address = 0; address < program.length; address++) {
+            memory.store(address, program[address], Sizes.SIZE_8_LOG2);
         }
     }
 
+    // The firmware is held as bytes because a restart re-loads it.
     private Images getImages() throws IOException {
-        return new Images(
-            Buildroot.getFirmware(),
-            Buildroot.getLinuxImage(),
-            Buildroot.getRootFilesystem());
+        try (final InputStream firmware = Buildroot.getSednaFirmware()) {
+            return new Images(firmware.readAllBytes(), Buildroot.getRootFilesystem());
+        }
     }
 
-    private record Images(InputStream firmware, InputStream kernel, InputStream rootfs) {
+    private record Images(byte[] firmware, InputStream rootfs) {
     }
 }

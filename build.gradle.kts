@@ -54,6 +54,11 @@ dependencies {
     implementation("li.cil.sedna:sedna:3.1.0")
     implementation("li.cil.sedna:sedna-buildroot:0.0.9")
     implementation("li.cil.sedna:sedna-cpm:0.0.1")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.8.2")
 }
 
 publishing {
