@@ -42,23 +42,23 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.logging.log4j:log4j-api:2.17.0")
-    implementation("org.apache.logging.log4j:log4j-core:2.17.0")
+    implementation(libs.log4j.api)
+    implementation(libs.log4j.core)
 
-    implementation("info.picocli:picocli:4.7.6")
-    implementation("org.jline:jline:3.20.0")
-    implementation("org.jline:jline-terminal-jna:3.20.0")
-    implementation("net.java.dev.jna:jna:5.9.0")
+    implementation(libs.picocli)
+    implementation(libs.jline)
+    implementation(libs.jline.terminal.jna)
+    implementation(libs.jna)
 
-    implementation("li.cil.ceres:ceres:0.0.6")
-    implementation("li.cil.sedna:sedna:3.1.0")
-    implementation("li.cil.sedna:sedna-buildroot:0.0.9")
-    implementation("li.cil.sedna:sedna-cpm:0.0.1")
+    implementation(libs.ceres)
+    implementation(libs.sedna)
+    implementation(libs.sedna.buildroot)
+    implementation(libs.sedna.cpm)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.8.2")
+    testImplementation(libs.junit.api)
+    testImplementation(libs.junit.params)
+    testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly(libs.junit.launcher)
 }
 
 publishing {
