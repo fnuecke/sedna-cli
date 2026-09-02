@@ -1,5 +1,5 @@
 [versions]
-ceres = "0.0.6"
+ceres = "0.0.7"
 sedna = "3.1.0"
 sedna-buildroot = "0.0.9"
 sedna-cpm = "0.0.1"
