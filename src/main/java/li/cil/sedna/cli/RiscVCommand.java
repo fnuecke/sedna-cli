@@ -21,6 +21,7 @@ import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.NonBlockingReader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import sun.misc.Signal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +38,9 @@ public final class RiscVCommand implements Callable<Integer> {
 
     @Option(names = "--terminal", description = "Use a jline terminal sized 80x25.")
     private boolean terminal;
+
+    private volatile boolean isPowerOffRequested;
+    private volatile boolean isHardStopRequested;
 
     @Override
     public Integer call() throws Exception {
@@ -67,6 +71,7 @@ public final class RiscVCommand implements Callable<Integer> {
         rtc.getInterrupt().set(0xB, board.getInterruptController());
         hdd.getInterrupt().set(0x1, board.getInterruptController());
         fs.getInterrupt().set(0x2, board.getInterruptController());
+        board.getSystemController().getInterrupt().set(0x3, board.getInterruptController());
 
         board.addDevice(0x80000000L, memory);
         board.addDevice(uart);
@@ -86,6 +91,8 @@ public final class RiscVCommand implements Callable<Integer> {
         board.initialize();
         board.setRunning(true);
 
+        Signal.handle(new Signal("INT"), signal -> handleInterrupt(board));
+
         if (enableGdbStub) {
             board.enableGDB(55554, waitForGdb);
         }
@@ -95,7 +102,7 @@ public final class RiscVCommand implements Callable<Integer> {
 
         try (final SerialConsole console = new SerialConsole()) {
             int remaining = 0;
-            while (board.isRunning()) {
+            while (board.isRunning() && !isHardStopRequested) {
                 final long stepStart = System.currentTimeMillis();
 
                 remaining += cyclesPerSecond;
@@ -152,6 +159,7 @@ public final class RiscVCommand implements Callable<Integer> {
             uart.getInterrupt().set(0xA, board.getInterruptController());
             rtc.getInterrupt().set(0xB, board.getInterruptController());
             hdd.getInterrupt().set(0x1, board.getInterruptController());
+            board.getSystemController().getInterrupt().set(0x3, board.getInterruptController());
 
             board.addDevice(0x80000000L, memory);
             board.addDevice(uart);
@@ -170,11 +178,13 @@ public final class RiscVCommand implements Callable<Integer> {
             board.initialize();
             board.setRunning(true);
 
+            terminal.handle(Terminal.Signal.INT, signal -> handleInterrupt(board));
+
             final int cyclesPerSecond = board.getCpu().getFrequency();
             final int cyclesPerStep = 1_000;
 
             int remaining = 0;
-            while (board.isRunning()) {
+            while (board.isRunning() && !isHardStopRequested) {
                 final long stepStart = System.currentTimeMillis();
 
                 remaining += cyclesPerSecond;
@@ -206,6 +216,15 @@ public final class RiscVCommand implements Callable<Integer> {
                     Thread.sleep(sleep);
                 }
             }
+        }
+    }
+
+    private void handleInterrupt(final R5Board board) {
+        if (isPowerOffRequested || !board.getSystemController().requestPowerOff()) {
+            isHardStopRequested = true;
+        } else {
+            isPowerOffRequested = true;
+            System.err.println("\nPower off requested. Press Ctrl+C again to stop immediately.");
         }
     }
 
